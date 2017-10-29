@@ -17,7 +17,7 @@ A continuación se explican los pasos básico para la instalación del proyecto 
 
 4. Abrir Unity y elegir este proyecto. En caso de que no aparezca lo mejor es utilizar la opción Open y buscar la nueva carpeta del proyecto manualmente.
 
-# Contribución
+## Contribución
 
 Cuando hagamos algo que queramos subir al repositorio, los pasos a seguir son los siguientes:
 
@@ -39,6 +39,6 @@ Si ya teniamos descargado el repositorio en nuestro ordenador y se han hecho cam
 
 2. Escribimos el siguiente comando *git pull origin master*. Con este comando  se descargarán todos los cambios que se hayan producido en el proyecto.
 
-3. Si ya habiamos hecho cambios a nuestro proyecto que aun no habiamos subido, será neceseraio hacer antes un *git commit -m "Mensaje con información sobre el cambio hecho"* para poder completar sin error el paso anterior, ya que la consola nos avisará de que nuestro cambios podrían perderse. Si quereis, podeis desecahr esos cambios mediante el comando *gut stash*, así podeis completar el paso anterior sin tener que seguir usando vuestros cambios.
+3. Si ya habiamos hecho cambios a nuestro proyecto que aun no habiamos subido, será neceseraio hacer antes un *git commit -m "Mensaje con información sobre el cambio hecho"* para poder completar sin error el paso anterior, ya que la consola nos avisará de que nuestro cambios podrían perderse. Si queréis, podéis desechar esos cambios mediante el comando *git stash*, así podéis completar el paso anterior sin tener que seguir usando vuestros cambios.
 
 4. Al reabrir el proyecto, deberían estar esos cambios ya añadidos.
