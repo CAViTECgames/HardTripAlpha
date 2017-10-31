@@ -3,7 +3,26 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Interface
+  - Hud
+  - HealthBar
+  - Mask
+  - Frame
+  - Life
+  - ConfigController
+  - Carriage_1
+  - Carriage_2
+  - Carriage_3
+  - Carriage_4
+  - Carriage_5
+  - CarriageLife_2
+  - CarriageLife_1
+  - CarriageLife_3
+  - CarriageLife_4
+  - CarriageLife_5
+  - Inventory
+  - Clues
   layers:
   - Default
   - TransparentFX
