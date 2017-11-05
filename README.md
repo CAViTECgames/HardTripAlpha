@@ -42,3 +42,15 @@ Si ya teniamos descargado el repositorio en nuestro ordenador y se han hecho cam
 3. Si ya habiamos hecho cambios a nuestro proyecto que aun no habiamos subido, será neceseraio hacer antes un *git commit -m "Mensaje con información sobre el cambio hecho"* para poder completar sin error el paso anterior, ya que la consola nos avisará de que nuestro cambios podrían perderse. Si queréis, podéis desechar esos cambios mediante el comando *git stash*, así podéis completar el paso anterior sin tener que seguir usando vuestros cambios.
 
 4. Al reabrir el proyecto, deberían estar esos cambios ya añadidos.
+
+## Cómo cambiar de rama
+
+Algunas veces puede resultar útil dividir el repositorio en varias "ramas", sobre todo si somos conscientes de que lo hagamos se pise con lo que está haciendo otro o por si son cambios que no están lo suficientemente listos como para implementarlos en la versión principal. Con estos pasos podemos cambiar de rama:
+
+1. Abrimos un terminal en la carpeta de nuestro proyecto.
+
+2. Ejecutamos *git pull origin <Nombre de la rama>* y con esto se nos añade una rama nueva a nuestro repositirio local.
+
+3. Si habiamos hecho cambios mientras estabamos en nuestra rama master, que aun no habiamos subido, hacemos *git commit -m "Mensaje con información sobre el cambio hecho"* para guardarlos o *git stash* para desecharlos.
+
+4. Hacemos *git checkout <Nombre de la rama>* para cambiar a esa rama. Para volver a la principal, se hace lo mismo *git checkout master*. 
