@@ -23,6 +23,7 @@ TagManager:
   - CarriageLife_5
   - Inventory
   - Clues
+  - Character
   layers:
   - Default
   - TransparentFX

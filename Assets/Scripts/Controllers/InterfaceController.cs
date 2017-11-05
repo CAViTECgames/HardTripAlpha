@@ -22,7 +22,7 @@ public class InterfaceController : MonoBehaviour {
 	{		
 		State_Bar(false);
 		for(int i=0 ; i<=5 ; i++){
-			carriagesText[i].text = "" + GameObject.Find ("ConfigController").GetComponent<ConfigController>().carriageMaxLife;
+			carriagesText[i].text = "" + ConfigController.carriageMaxLife;
 		}
 		clues.text = 0.ToString();
 	}
@@ -51,7 +51,7 @@ public class InterfaceController : MonoBehaviour {
 	//reset character life
 	public void resetLife(){
 
-		lifeValue = GameObject.Find ("ConfigController").GetComponent<ConfigController>().characterMaxLife;
+		lifeValue = ConfigController.characterMaxLife;
 	}
 
 	//decrement the healthbar for the character

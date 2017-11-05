@@ -4,17 +4,20 @@ using UnityEngine;
 
 public class ConfigController : MonoBehaviour {
 
-	public int characterActualLife=0;
-	public int characterMaxLife = 100;
-	public int carriageMaxLife = 100;
-	public int banditAgressiveMaxLife = 100;
-	public int wolfMaxLife = 100;
-	public int banditNegotiatorMaxLife = 100;	
-	public int characterSpeed = 5;
-	public int carriageSpeed = 3;
-	public int wolfSpeed = 4;
-	public int banditAgressiveSpeed= 4;
-	public int banditNegotiatorSpeed = 4;
+	public static int characterActualLife=0;
+	public static int characterMaxLife = 100;
+	public static int carriageMaxLife = 100;
+	public static int banditAgressiveMaxLife = 100;
+	public static int wolfMaxLife = 100;
+	public static int banditNegotiatorMaxLife = 100;	
+	public static int characterSpeed = 5;
+	public static int carriageSpeed = 3;
+	public static int wolfSpeed = 4;
+	public static int banditAgressiveSpeed= 4;
+	public static int banditNegotiatorSpeed = 4;
+
+    // Technical values
+    public static int combatUpdateFrames = 5;
 
 	// Use this for initialization
 	void Start () {
@@ -22,7 +25,7 @@ public class ConfigController : MonoBehaviour {
 		characterActualLife = carriageMaxLife;
 	}
 
-	public int GetLife(string objective){
+	public static int GetLife(string objective){
 
 		switch (objective) {
 
@@ -41,7 +44,7 @@ public class ConfigController : MonoBehaviour {
 		}
 	}
 
-	public int GetSpeed(string objective){
+	public static int GetSpeed(string objective){
 
 		switch (objective) {
 
