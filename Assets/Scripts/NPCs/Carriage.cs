@@ -7,6 +7,7 @@ public class Carriage : Unit
 
     // Combat template characterisitcss
     private const int attackDelay = 150;
+    private const int attackWindow = 30;
 
     // Use this for initialization
     void Start()
@@ -32,9 +33,10 @@ public class Carriage : Unit
         unitsInCombatWith = new ArrayList();
         currentCombats = new ArrayList();
         target = null;
+        inCombat = false;
 
         // Misc
-        player = true;
+        player = false;
     }
 
     // Getters
@@ -42,5 +44,10 @@ public class Carriage : Unit
     protected override int getAttackDelay()
     {
         return attackDelay;
+    }
+
+    protected override int getCombatAttackWindow()
+    {
+        return attackWindow;
     }
 }

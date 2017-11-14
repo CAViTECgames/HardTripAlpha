@@ -63,7 +63,8 @@ public class PlayerMovement : MonoBehaviour {
 	void Animating (float h, float v)
 	{
 		bool walking = h != 0f || v != 0f;
-		//anim.SetBool ("Walk", walking);
-	}
+        Unit me = gameObject.GetComponent<Unit>();
+       // me.setCurrentAnimation("run");
+    }
 }
 

@@ -18,6 +18,7 @@ public class ConfigController : MonoBehaviour {
 
     // Technical values
     public static int combatUpdateFrames = 5;
+    public static float statusFrameScale = 0.1f;
 
 	// Use this for initialization
 	void Start () {

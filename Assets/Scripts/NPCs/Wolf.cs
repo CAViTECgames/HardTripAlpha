@@ -5,7 +5,8 @@ using UnityEngine;
 public class Wolf : Unit {
 
     // Combat template characterisitcss
-    private const int  attackDelay = 90;
+    private const int attackDelay = 120;
+    private const int attackWindow = 0;
 
     // Incializamos el lobo
     void Start ()
@@ -16,7 +17,7 @@ public class Wolf : Unit {
         faction = Faction.FACTION_ENEMY;
         movementSpeed = ConfigController.wolfSpeed;
         scale = 8;
-        setScale();
+        setScale(scale);
 
         // Combat template characterisitcs
         attackDamage = 15;
@@ -31,15 +32,21 @@ public class Wolf : Unit {
         unitsInCombatWith = new ArrayList();
         currentCombats = new ArrayList();
         target = null;
+        inCombat = false;
 
         // Misc
         player = false;
+        corpseDuration = 1000;
     }
-
+    
     // Getters
     protected override int getAttackDelay()
     {
         return attackDelay;
     }
 
+    protected override int getCombatAttackWindow()
+    {
+        return attackWindow;
+    }
 }

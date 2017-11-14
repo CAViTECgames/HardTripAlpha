@@ -41,7 +41,8 @@ public abstract class Unit : MonoBehaviour
         COMBAT_STATUS_WAITING_FOR_ATTACK,
         COMBAT_STATUS_DEFENDING,
         COMBAT_STATUS_STUNNED,
-        COMBAT_STATUS_DEAD
+        COMBAT_STATUS_DEAD,
+        COMBAT_STATUS_CORPSE
     }
 
     // General characteristics
@@ -58,7 +59,9 @@ public abstract class Unit : MonoBehaviour
     
     // Current Combat characteristics
     protected CombatStatus combatStatus;
+    protected int corpseDuration;
     protected int combatAttackDelay;      // Este valor cambia durante el combate, al llegar a cero se ataca y se resetea al valor de plantilla
+    protected int combatAttackWindow;   // Tiempo que dura el ataque
     protected ArrayList unitsInAggroRange;
     protected ArrayList unitsInCombatWith;
     protected ArrayList unitsInAttackRange;
@@ -78,11 +81,15 @@ public abstract class Unit : MonoBehaviour
     }
 
     // Con este método cogemos el tiempo entre ataques, definido en la clase hija
-    protected abstract int getAttackDelay();  
+    protected abstract int getAttackDelay();
+
+    protected abstract int getCombatAttackWindow();
 
     public Unit getClosestUnitInAggroRange()
     {
-        // Aqui deberiamos pillar el más cercano
+        // Si está vacío devolvemos null
+        if (unitsInAggroRange.Count == 0)
+            return null;
 
         return (Unit)unitsInAggroRange[0];
     }
@@ -124,8 +131,9 @@ public abstract class Unit : MonoBehaviour
         this.combatStatus = combatStatus;
     }
 
-    public void setScale()
+    public void setScale(float scale_f)
     {
+        this.scale = scale_f;
         float scale_x = gameObject.transform.localScale.x * scale;
         float scale_y = gameObject.transform.localScale.y * scale;
         float scale_z = gameObject.transform.localScale.z * scale;
@@ -151,13 +159,15 @@ public abstract class Unit : MonoBehaviour
 
     public void attackUnit(Unit victim)
     {
-        Debug.LogWarning(gameObject.name + " Ataca a " + victim.gameObject.name);
+        Debug.Log(gameObject.name + " Ataca a " + victim.gameObject.name);
+
         // Si no se está defencdiendo, le dañamos
-        if(victim.getCombatStatus() != Unit.CombatStatus.COMBAT_STATUS_DEFENDING)
+        if (victim.getCombatStatus() != Unit.CombatStatus.COMBAT_STATUS_DEFENDING)
             dealDamageToUnit(victim);
-        // Tenemos que volver a esperar por nuestro timer
-        setCombatStatus(Unit.CombatStatus.COMBAT_STATUS_WAITING_FOR_ATTACK);
+
         resetCombatAttackDelay();
+        resetAttackWindow();
+        combatStatus = CombatStatus.COMBAT_STATUS_WAITING_FOR_ATTACK;
     }
 
     public void chaseUnit(Unit victim)
@@ -165,29 +175,63 @@ public abstract class Unit : MonoBehaviour
         if (player)
             return;
 
+        Debug.Log(name + ": Persiguiendo a " + victim.name);
+
+        setCurrentAnimation("run");
+
         NavMeshAgent nav = gameObject.GetComponentInParent<NavMeshAgent>();
 
-        nav.isStopped = false;
+        nav.enabled = true;
         nav.SetDestination(victim.gameObject.transform.position);
     }
 
     public void dealDamageToUnit(Unit victim)
     {
+        if(victim.getCombatStatus() == CombatStatus.COMBAT_STATUS_DEAD)
+        {
+            Debug.Log("Unidad muerta: " + victim.name + "No se le puede dañar");
+            return;
+        }
+
         int dmg = attackDamage - victim.getArmor();
 
-        Debug.LogWarning("El daño del ataque es" + dmg);
-        Debug.LogWarning("La salud restante de " + victim.gameObject.name + " es " + victim.getHealthPoints());
+        Debug.Log("El daño del ataque es" + dmg);
 
         if (victim.reduceHealthPointsBy(dmg) <= 0)
             victim.setCombatStatus(Unit.CombatStatus.COMBAT_STATUS_DEAD);
+
+        Debug.Log("La salud restante de " + victim.gameObject.name + " es " + victim.getHealthPoints());
     }
 
     public void enterInCombatWith(Unit victim)
     {
+        if (unitsInCombatWith.Contains(victim))
+        {
+            Debug.Log(gameObject.name + ": Ya estoy en combate con: " + victim.name) ;
+            return;
+        }
+            
+        if(!inCombat && !player)
+        {
+            Debug.Log(gameObject.name + ": Mi nuevo target es " + victim.name);
+            setTarget(victim);
+        }
+
+
         inCombat = true;
         unitsInCombatWith.Add(victim);
-        Debug.LogWarning(gameObject.name + ": Acabo de entrar en combate, preparando mi ataque");
+        Debug.Log(gameObject.name + ": Acabo de entrar en combate, preparando mi ataque");
         setCombatStatus(CombatStatus.COMBAT_STATUS_WAITING_FOR_ATTACK);
+    }
+
+    public void exitCombatWith(Unit victim)
+    {
+        unitsInCombatWith.Remove(victim);
+        Debug.Log(gameObject.name + ": Acabo de salir de combate con " + victim.name);
+
+        // No quedan más enemigos contra los que combatir, salimos de combate
+        if (unitsInCombatWith.Count == 0)
+            finishCombat();
     }
 
     public void finishCombat()
@@ -195,24 +239,37 @@ public abstract class Unit : MonoBehaviour
         inCombat = false;
         target = null;
         stopChasing();
-        Debug.LogWarning(gameObject.name + ": Salgo de combate, esperando a más enemigos");
-        setCombatStatus(CombatStatus.COMBAT_STATUS_IDLE);
+        Debug.Log(gameObject.name + ": Salgo de combate, esperando a más enemigos");
+
+        if(combatStatus != CombatStatus.COMBAT_STATUS_CORPSE)
+            setCombatStatus(CombatStatus.COMBAT_STATUS_IDLE);
+
+        setCurrentAnimation("idle");
     }
 
-    public void handleLosingTarget(Unit target)
+    public void handleDeath()
     {
-        // Eliminamos a la unidad de la lista
-        removeUnitInAggroRange(target);
+        combatStatus = CombatStatus.COMBAT_STATUS_CORPSE;
+        setCurrentAnimation("dead");
 
-        // Si era la última unidad, salimos de combate y volvemos
-        if (getUnitsInAggroRange().Count == 0)
-        {
-            finishCombat();
-            return;
-        }
-        // Si aún hay gente en nuestro rango, elegimos el más cercano
-        else
+        // Desactivamos el icono de target
+        if (gameObject.transform.Find("TargetIndicator"))
+            gameObject.transform.Find("TargetIndicator").gameObject.SetActive(false);
+    }
+
+    public void handleLosingTarget()
+    {
+        // Si seguimos en combate tras perder el target, elegimos otro nuevo
+        if (inCombat)
             setTarget(getClosestUnitInAggroRange());
+    }
+
+    public void handleUnitDeath(Unit victim)
+    {
+        // Eliminamos a esa unidad de todas nuestras listas
+        exitCombatWith(victim);
+        removeUnitInAggroRange(victim);
+        removeUnitInAttackRange(victim);
     }
 
     public bool isInAttackRangeWith(Unit unit)
@@ -247,33 +304,66 @@ public abstract class Unit : MonoBehaviour
         combatAttackDelay = getAttackDelay();
     }
 
+    public void resetAttackWindow()
+    {
+        combatAttackWindow = getCombatAttackWindow();
+    }
+
     public void stopChasing()
     {
         if (player)
             return;
 
         NavMeshAgent nav = gameObject.GetComponentInParent<NavMeshAgent>();
-        nav.isStopped = true;
+
+        if (nav.enabled)
+        {
+            Debug.Log("Parando la persecución");
+            nav.enabled = false;
+            setCurrentAnimation("idle");
+        }
+
+
     }
 
     public void updateAttackStatus(int framesOffset)
     {
-        // Según los frames que han pasado desde la última vez, reducimos el delay que queda para atacar
-        if(combatStatus == Unit.CombatStatus.COMBAT_STATUS_WAITING_FOR_ATTACK)
+        switch(combatStatus)
         {
-            reduceCombatAttackDelayBy(framesOffset);
-            Debug.LogWarning(gameObject.name + ": Mi timer se reduce en " + framesOffset + ", me quedan " + combatAttackDelay + " para poder volver a atacar");
+            case CombatStatus.COMBAT_STATUS_ATTACKING:
+
+                Debug.Log(gameObject.name + ": En ventana de ataque!");
+
+                setCurrentAnimation("attack");
+
+                combatAttackWindow -= framesOffset;
+                if (combatAttackWindow <= 0)
+                    attackUnit(target);
+
+                break;
+
+            case CombatStatus.COMBAT_STATUS_WAITING_FOR_ATTACK:
+
+                setCurrentAnimation("idle");
+                reduceCombatAttackDelayBy(framesOffset);
+                //Debug.Log(gameObject.name + ": Mi timer se reduce en " + framesOffset + ", me quedan " + combatAttackDelay + " para poder volver a atacar");
+
+                // Si es menor o igual que 0, nuestro ataque está listo. Reseteamos el timer
+                if (combatAttackDelay <= 0)
+                {
+                    combatStatus = CombatStatus.COMBAT_STATUS_ATTACK_READY;
+                    Debug.Log(gameObject.name + ": Mi siguiente ataque está listo!");
+                }
+
+                break;
+
+            case CombatStatus.COMBAT_STATUS_ATTACK_READY:
+
+                break;
+
+            default:
+                break;
         }
-
-
-        // Si es menor o igual que 0, nuestro ataque está listo. Reseteamos el timer
-        if (combatAttackDelay <= 0)
-        {
-            combatStatus = CombatStatus.COMBAT_STATUS_ATTACK_READY;
-            Debug.LogWarning(gameObject.name + ": Mi siguiente ataque está listo!");
-            resetCombatAttackDelay();
-        }
-
     }
 
     // Misc
@@ -288,46 +378,84 @@ public abstract class Unit : MonoBehaviour
         return inCombat;
     }
 
+    // Handling animations
+    public void setCurrentAnimation(string animation)
+    {
+        Animator animator = gameObject.GetComponent<Animator>();
+        if (animator)
+        {
+            // cancelamos todas las demás
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            {
+                animator.SetBool(parameter.name, false);
+            }
+            Debug.Log(name + ": Poniendo la animación " + animation);
+            animator.SetBool(animation, true);
+        }
+            
+        else
+            Debug.Log("No animator found for unit " + name);
+    }
+
+    // Funcion princiapl
     public void Update()
     {
         updateFrames++;
-        if (updateFrames == ConfigController.combatUpdateFrames)
-        {
-            updateUnit(updateFrames);
-            updateFrames = 0;
-        }
+        //if (updateFrames == ConfigController.combatUpdateFrames)
+        //{
+        OldupdateUnit(updateFrames);
+        updateFrames = 0;
+        //}
     }
 
-    public void updateUnit(int frameOffset)
+    public void OldupdateUnit(int frameOffset)
     {
+
         // Si estamos muertos, desaparecemos
         if (combatStatus == CombatStatus.COMBAT_STATUS_DEAD)
         {
-            Debug.LogWarning(this.gameObject.name + "Ha muerto");
+            Debug.Log(this.gameObject.name + "Ha muerto");
             // Animación de muerte y tras X tiempo desaparecer
-            gameObject.SetActive(false);
+            handleDeath();
+            return;
+        }
+
+        // Manejamos el tiempo de los cadáveres
+        if(combatStatus == CombatStatus.COMBAT_STATUS_CORPSE)
+        {
+            corpseDuration-= frameOffset;
+            if (corpseDuration <= 0)
+            {
+                gameObject.SetActive(false);
+                Debug.Log("Se ha desactivado + " + name);
+            }
+                
             return;
         }
 
         // Si somos la caravana, no hacemos nada más
         if (type == CreatureType.CREATURE_TYPE_MISC)
             return;
-
-        // Sin target ya hemos acabado
-        if (target == null)
-        {
-            return;
-        }
-
-        // Si nuestro target está muerto, cambiamos al más cercano
-        if (target.getCombatStatus() == CombatStatus.COMBAT_STATUS_DEAD && !isPlayer())
-            handleLosingTarget(target);
         
         // Si estamos en combate, comprobamos como va
         if(inCombat)
         {
             // Actualizamos nuestro timer
             updateAttackStatus(frameOffset);
+
+            if (!target)
+                return;
+
+            if (combatStatus == CombatStatus.COMBAT_STATUS_ATTACKING)
+                return;
+
+            // Si nuestro target está muerto, cambiamos al más cercano
+            if (target.getCombatStatus() == CombatStatus.COMBAT_STATUS_DEAD ||
+                target.getCombatStatus() == CombatStatus.COMBAT_STATUS_CORPSE)
+            {
+                handleUnitDeath(target);
+                handleLosingTarget();
+            }
 
             // Si estamos dentro del rango nos detenemos
             if (isInAttackRangeWith(target))
@@ -336,12 +464,31 @@ public abstract class Unit : MonoBehaviour
                     stopChasing();
 
                 // Si nuestro ataque está listo, atacamos
-                if (combatStatus == CombatStatus.COMBAT_STATUS_ATTACK_READY)
-                    attackUnit(target);
+                if (combatStatus == CombatStatus.COMBAT_STATUS_ATTACK_READY && !player)
+                    combatStatus = CombatStatus.COMBAT_STATUS_ATTACKING;
             }
             // Si no lo estamos, perseguimos al target
             else if (!isPlayer())
                 chaseUnit(target);
         }
+    }
+
+    public void updateUnit(int frameOffset)
+    {
+        // Si estamos muertos, desaparecemos
+        if (combatStatus == CombatStatus.COMBAT_STATUS_DEAD)
+        {
+            Debug.Log(this.gameObject.name + "Ha muerto");
+            // Animación de muerte y tras X tiempo desaparecer
+            gameObject.SetActive(false);
+            return;
+        }
+
+
+
+
+
+
+
     }
 }

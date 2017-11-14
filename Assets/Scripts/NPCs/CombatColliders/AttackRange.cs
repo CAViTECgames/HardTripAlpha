@@ -10,7 +10,15 @@ public class AttackRange : MonoBehaviour
         Unit colliderOwner = gameObject.GetComponentInParent<Unit>();
         Unit victim = other.gameObject.GetComponent<Unit>();
 
-        colliderOwner.addUnitInAttackRange(victim);
+        if (victim == null)
+            return;
+
+        if (victim.getFaction() == Unit.Faction.FACTION_FRIENDLY)
+            colliderOwner.addUnitInAttackRange(victim);
+        else if (colliderOwner.isPlayer() && victim.getFaction() == Unit.Faction.FACTION_ENEMY)
+            colliderOwner.addUnitInAttackRange(victim);
+
+        Debug.LogWarning(colliderOwner.name + ": Entered attack range " + victim.name);
     }
 
     private void OnTriggerExit(Collider other)
@@ -20,4 +28,5 @@ public class AttackRange : MonoBehaviour
 
         colliderOwner.removeUnitInAttackRange(victim);
     }
+
 }
